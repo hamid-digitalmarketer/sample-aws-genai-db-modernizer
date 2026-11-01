@@ -344,6 +344,15 @@ _SQL_SHAPE = re.compile(
 # in capitals (in lower case these are ordinary words: "moves from", "where").
 _SQL_QUOTED = re.compile(
     r"`|\[\w[^\]]*\]|\"[\w.$]+\"|\b(?:SELECT|FROM|WHERE|JOIN|HAVING|LIMIT|OFFSET|DISTINCT|VALUES)\b"
+    # DDL and maintenance statements (#1738), by their opener in capitals: the opener
+    # alone, or with the word that names its object. Each alternative is a fixed word
+    # sequence, so the match stays linear.
+    r"|\b(?:CREATE|ALTER|DROP)\s+(?:(?:OR|REPLACE|UNIQUE|MATERIALIZED|TEMP|TEMPORARY"
+    r"|CLUSTERED|NONCLUSTERED)\s+)*(?:TABLE|INDEX|VIEW|SEQUENCE|TRIGGER|PROCEDURE|FUNCTION"
+    r"|SCHEMA|DATABASE|TYPE|EXTENSION)\b"
+    r"|\b(?:VACUUM|REINDEX|TRUNCATE)\b"
+    r"|\bMERGE\s+INTO\b|\bUPDATE\s+STATISTICS\b|\bCOMMENT\s+ON\b|\bLOCK\s+TABLES?\b"
+    r"|\b(?:ANALYZE|ANALYSE|OPTIMIZE|DESCRIBE|GRANT|REVOKE|CALL|EXEC|EXECUTE)\s+[\w.$`\"\[]"
 )
 # An identifier whatever list it is on: a word with an inner underscore (snake_case),
 # as a schema, table, view, routine or column name is written ("revoked_at").

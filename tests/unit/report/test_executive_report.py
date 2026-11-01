@@ -272,6 +272,49 @@ class TestWithoutTableNames:
             "Schema design gap: 2 queries have no access pattern."
         )
 
+    GAP = "Schema design gap: these four queries have no access pattern"
+
+    @pytest.mark.parametrize(
+        "statement",
+        [
+            "TRUNCATE TABLE t",
+            "CREATE TABLE t (id int)",
+            "CREATE UNIQUE INDEX ix ON t (c)",
+            "CREATE OR REPLACE VIEW v AS SELECT 1",
+            "ALTER TABLE t ADD COLUMN c int",
+            "ALTER INDEX ix ON t REBUILD",
+            "DROP TABLE t",
+            "DROP INDEX ix ON t",
+            "DROP VIEW v",
+            "UPDATE STATISTICS t",
+            "COMMENT ON TABLE t IS 'x'",
+            "OPTIMIZE TABLE t",
+            "LOCK TABLES t READ",
+            "VACUUM ANALYZE t",
+            "VACUUM",
+            "ANALYZE t",
+            "REINDEX TABLE t",
+            "GRANT SELECT ON t TO u",
+            "REVOKE ALL ON t FROM u",
+            "CALL refresh_totals(1)",
+            "EXEC dbo.refresh",
+            "EXECUTE proc1",
+            "MERGE INTO t USING s ON t.id = s.id",
+            "DESCRIBE t",
+        ],
+    )
+    def test_a_ddl_or_maintenance_statement_is_cut_like_dml(self, statement: str) -> None:
+        assert without_table_names(f"{self.GAP}: {statement}", None) == self.GAP + "."
+
+    @pytest.mark.passes_on_main
+    def test_ddl_words_in_prose_are_left_alone(self) -> None:
+        for text in (
+            "We alter the table layout and drop the index later, then analyze the results.",
+            "Grant access to the call center. Execute the plan and describe the merge.",
+            "Vacuum settings and truncate behaviour are covered in the runbook.",
+        ):
+            assert without_table_names(text, None) == text
+
     def test_a_sentence_with_no_leading_clause_is_left_out(self) -> None:
         text = "Keep it simple. Move order_items first. Then verify."
         assert without_table_names(text, self.NAMES) == "Keep it simple. Then verify."
